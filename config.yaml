@@ -1,0 +1,113 @@
+# Antique / estate / yard sale scanner configuration
+#
+# Target: sales events (estate sales, estate auctions, antique shows & flea
+# markets, tag/yard/garage/barn sales) in and around New York City, the
+# Hudson Valley, and the Sullivan County Catskills / Upper Delaware.
+# Region place-name and zip-prefix matching lives in scanner/classify.py.
+
+recipient: work@justice.engineering
+
+# Full uncapped listings board, written to docs/index.html each run and
+# served by GitHub Pages (one-time enable: Settings → Pages → Deploy from a
+# branch → this branch, /docs folder). Every sale card on the board has a
+# stable anchor id, so individual sales can be linked directly.
+board_url: https://meandavejustice.github.io/antiques/
+
+# ---------------------------------------------------------- Craigslist ------
+# The NY-area subdomains, swept via the static SEO search fallback. `paths`
+# are category searches (gms = garage & moving sales — where estate/tag sales
+# are posted; ata = antiques for sale, kept because shop/barn-sale events are
+# announced there). `queries` are free-text searches over all for-sale
+# categories.
+craigslist:
+  subdomains:
+    - newyork        # the five boroughs
+    - hudsonvalley   # Poughkeepsie / Newburgh / Kingston …
+    - catskills      # Sullivan / Delaware / Greene / Ulster
+    - albany         # Columbia & Greene county edges
+    - longisland
+    - newjersey      # North Jersey, right across the Hudson
+    - poconos        # PA side of the Upper Delaware, across from Sullivan
+  paths:
+    - search/gms
+    - search/ata
+  queries:
+    - estate sale
+    - antique auction
+    - barn sale
+
+# ------------------------------------------------ sale-listing sites --------
+# Aggregators and auction platforms. Each entry lists one or more candidate
+# URLs (site layouts and URL schemes drift); the generic parser reads
+# schema.org JSON-LD events when present and falls back to harvesting sale
+# links by keyword. Sites that error or change layout show up in the digest's
+# source-health table instead of silently disappearing.
+#
+# region_hint marks listings from single-region pages when the ad text itself
+# doesn't pin down a place. Valid: NYC, HUDSON_VALLEY, CATSKILLS, NEARBY.
+sale_sites:
+  - name: EstateSales.NET — NYC
+    region_hint: NYC
+    urls:
+      - https://www.estatesales.net/NY/New-York
+      - https://www.estatesales.net/NY/Brooklyn
+  - name: EstateSales.NET — Hudson Valley
+    region_hint: HUDSON_VALLEY
+    urls:
+      - https://www.estatesales.net/NY/Poughkeepsie
+      - https://www.estatesales.net/NY/Kingston
+  - name: EstateSales.NET — Catskills
+    region_hint: CATSKILLS
+    urls:
+      - https://www.estatesales.net/NY/Monticello
+      - https://www.estatesales.net/NY/Liberty
+  - name: estatesales.org (NY)
+    urls:
+      - https://estatesales.org/estate-sales/ny
+      - https://estatesales.org/ny
+      - https://www.estatesales.org/estate-sales/new-york
+  - name: gsalr (garage-sale aggregator)
+    urls:
+      - https://gsalr.com/sales/new-york-ny
+      - https://gsalr.com/sales/poughkeepsie-ny
+      - https://gsalr.com/sales/kingston-ny
+      - https://gsalr.com/sales/monticello-ny
+  - name: AuctionZip
+    urls:
+      - https://www.auctionzip.com/cgi-bin/auctionsearch.cgi?zip=10001&category=0
+      - https://www.auctionzip.com/cgi-bin/auctionsearch.cgi?zip=12401&category=0
+      - https://www.auctionzip.com/cgi-bin/auctionsearch.cgi?zip=12701&category=0
+      - https://www.auctionzip.com/NY-Auctioneers/
+  - name: AuctionNinja
+    urls:
+      - https://www.auctionninja.com/estate-sales/new-york
+      - https://www.auctionninja.com/online-estate-sales/new-york.html
+      - https://www.auctionninja.com/hudson-valley-estate-sales
+  - name: HiBid New York
+    urls:
+      - https://ny.hibid.com/auctions
+      - https://hibid.com/new-york/auctions
+  - name: MaxSold
+    urls:
+      - https://maxsold.com/auctions/new-york
+      - https://maxsold.com/estate-sales/new-york
+  - name: Antiques & The Arts Weekly events
+    urls:
+      - https://www.antiquesandthearts.com/events/
+      - https://www.antiquesandthearts.com/category/events/
+
+# ------------------------------------------------------- web discovery ------
+# Sweeps the wider web daily — sale companies' own sites, town Facebook-page
+# mirrors, show promoters, local-paper calendars. Keyless via DuckDuckGo by
+# default; set a BRAVE_API_KEY secret to use the Brave Search API instead
+# (free tier, more robust).
+discovery:
+  queries:
+    - estate sale this weekend hudson valley ny
+    - estate sale brooklyn OR queens OR manhattan this weekend
+    - estate sales sullivan county ny
+    - antique show flea market hudson valley
+    - antiques barn sale catskills ny
+    - auction sullivan county OR ulster county ny
+    - site:estatesales.net kingston OR poughkeepsie OR monticello NY
+    - site:auctionninja.com hudson valley estate sale
