@@ -128,11 +128,18 @@ def _from_anchors(soup: BeautifulSoup, base_url: str, site: str,
         url = urljoin(base_url, href)
         if not url.startswith("http"):
             continue
+        # Climb to a card-sized block: sale cards print the dates and
+        # address *near* the link, not in it. Stop before page-level
+        # containers so context stays card-sized.
         parent = a.parent
-        for _ in range(2):  # climb to a card-sized block for context
-            if parent and parent.parent and \
-                    len(parent.get_text(strip=True)) < 60:
-                parent = parent.parent
+        for _ in range(4):
+            if (parent is None or parent.parent is None
+                    or parent.parent.name in ("body", "html", "main", "ul",
+                                              "ol", "table", "section")
+                    or len(parent.get_text(strip=True)) >= 200
+                    or len(parent.parent.get_text(strip=True)) > 700):
+                break
+            parent = parent.parent
         context = _WS_RE.sub(" ", parent.get_text(" ", strip=True))[:500] \
             if parent else ""
         lid = f"{_slug(site)}:{url}"

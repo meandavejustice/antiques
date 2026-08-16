@@ -211,6 +211,18 @@ _ZIP_TEXT_RE = re.compile(
     r"\b(?:ny|nj|ct|pa|new york|new jersey|connecticut|pennsylvania)\.?,?\s+"
     r"(\d{5})\b", re.I)
 
+# States that mean a sale is out of scope (aggregator hub pages mix in
+# featured sales from anywhere). Checked only after in-scope place names, so
+# the PA Upper Delaware towns still win. Runs on RAW lowercased text:
+# two-letter codes only in the ", ST" address form ("Bryn Mawr, PA") — bare
+# "pa"/"ma"/"me" are English words — plus unambiguous full state names.
+# "Delaware" is deliberately absent (Upper Delaware / Delaware County NY).
+_OUT_OF_SCOPE_RE = re.compile(
+    r",\s*(?:pa|vt|ma|nh|ri|me|md|va|dc|oh|fl|nc|sc|ga|tx|ca|wv)\b"
+    r"|\b(?:pennsylvania|vermont|massachusetts|new hampshire|rhode island|"
+    r"maryland|virginia|west virginia|ohio|florida|california|texas|"
+    r"georgia|north carolina|south carolina)\b")
+
 
 def _norm(text: str) -> str:
     """Lowercase; collapse punctuation/whitespace so 'Monticello, NY' and
@@ -225,7 +237,9 @@ def _phrase_in(phrase: str, text: str) -> bool:
 
 def region_of(sale: Sale) -> str:
     loc = _norm(sale.location)
-    text = _norm(sale.text())
+    head = _norm(f"{sale.title} {sale.location}")
+    body = _norm(sale.description)
+    raw = (sale.text() or "").lower()
 
     # 1. The location field, most specific region first. A location naming
     # NJ/CT is authoritative — it beats same-named NY towns (Ridgewood NJ vs
@@ -239,13 +253,24 @@ def region_of(sale: Sale) -> str:
                 if _phrase_in(town, loc):
                     return region
 
-    # 2. Distinctive phrases anywhere in the ad.
+    # 2. Distinctive phrases in the title (in-scope regions first), then the
+    # out-of-scope state guard — a title/location naming another state must
+    # not fall through to a region hint ("Estate sale — Bryn Mawr, PA" found
+    # on an NYC hub page is not an NYC sale).
     for region in (CATSKILLS, HUDSON_VALLEY, NYC, NEARBY):
         for phrase in _STRONG[region]:
-            if _phrase_in(phrase, text):
+            if _phrase_in(phrase, head):
+                return region
+    if _OUT_OF_SCOPE_RE.search((sale.title + " " + sale.location).lower()):
+        return NEARBY
+
+    # 3. Distinctive phrases in the description.
+    for region in (CATSKILLS, HUDSON_VALLEY, NYC, NEARBY):
+        for phrase in _STRONG[region]:
+            if _phrase_in(phrase, body):
                 return region
 
-    # 3. Zip codes: bare in the location field, state-prefixed in prose.
+    # 4. Zip codes: bare in the location field, state-prefixed in prose.
     zips = _ZIP_LOC_RE.findall(loc) + _ZIP_TEXT_RE.findall(sale.text() or "")
     for z in zips:
         if z[:3] in _ZIP_PREFIX:
@@ -253,7 +278,11 @@ def region_of(sale: Sale) -> str:
         if z[:2] in ("06", "07", "08"):      # CT / NJ
             return NEARBY
 
-    # 4. Fall back to where the listing was found.
+    # 5. Out-of-scope state anywhere in the ad beats the region hint.
+    if _OUT_OF_SCOPE_RE.search(raw):
+        return NEARBY
+
+    # 6. Fall back to where the listing was found.
     if sale.region_hint in (NYC, HUDSON_VALLEY, CATSKILLS, NEARBY):
         return sale.region_hint
     return UNKNOWN

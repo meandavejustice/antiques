@@ -95,6 +95,19 @@ assert s.region == classify.HUDSON_VALLEY, f"queen anne trap: {s.region}"
 check("Estate sale — Colonial Williamsburg reproductions", "", True, None,
       classify.UNKNOWN)
 check("Estate sale", "", True, None, classify.NEARBY, loc="Ridgewood, NJ 07450")
+# Out-of-scope states must not fall through to the page's region hint
+# (aggregator hub pages mix in featured sales from anywhere).
+check("2-day estate sale in Bryn Mawr, PA", "", True, None, classify.NEARBY,
+      hint="NYC")
+check("Vintage Bennington Vermont Estate Sale", "", True, None,
+      classify.NEARBY, hint="HUDSON_VALLEY")
+check("Estate sale", "Newtown Square, PA 19073 · starts Friday", True, None,
+      classify.NEARBY, hint="NYC")
+# …but the in-scope PA river towns still win over the PA guard.
+check("Estate sale Honesdale, PA", "", True, None, classify.CATSKILLS)
+# Bare "pa"/"ma"/"me" as English words must not trigger the guard.
+check("Ma and Pa's barn sale — email me to ask", "", True, None,
+      classify.CATSKILLS, hint="CATSKILLS")
 
 # ------------------------------------------------------------------ tags ----
 s = mk("Estate sale", "mid-century teak credenza, records and LPs, "

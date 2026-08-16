@@ -56,22 +56,21 @@ sale_sites:
     urls:
       - https://www.estatesales.net/NY/Poughkeepsie
       - https://www.estatesales.net/NY/Kingston
+  # Small Sullivan towns have no EstateSales.NET city hub (404); the
+  # Middletown hub lists sales within ~50 miles, which blankets Sullivan
+  # and the Upper Delaware.
   - name: EstateSales.NET — Catskills
     region_hint: CATSKILLS
     urls:
-      - https://www.estatesales.net/NY/Monticello
-      - https://www.estatesales.net/NY/Liberty
+      - https://www.estatesales.net/NY/Middletown
   - name: estatesales.org (NY)
     urls:
       - https://estatesales.org/estate-sales/ny
       - https://estatesales.org/ny
       - https://www.estatesales.org/estate-sales/new-york
-  - name: gsalr (garage-sale aggregator)
-    urls:
-      - https://gsalr.com/sales/new-york-ny
-      - https://gsalr.com/sales/poughkeepsie-ny
-      - https://gsalr.com/sales/kingston-ny
-      - https://gsalr.com/sales/monticello-ny
+  # (gsalr.com and maxsold.com hard-block CI requests with 403s — removed;
+  # Craigslist covers the garage-sale beat and MaxSold auctions surface via
+  # web discovery.)
   - name: AuctionZip
     urls:
       - https://www.auctionzip.com/cgi-bin/auctionsearch.cgi?zip=10001&category=0
@@ -87,10 +86,6 @@ sale_sites:
     urls:
       - https://ny.hibid.com/auctions
       - https://hibid.com/new-york/auctions
-  - name: MaxSold
-    urls:
-      - https://maxsold.com/auctions/new-york
-      - https://maxsold.com/estate-sales/new-york
   - name: Antiques & The Arts Weekly events
     urls:
       - https://www.antiquesandthearts.com/events/

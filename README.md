@@ -20,10 +20,9 @@ the PA side of the Upper Delaware). Results arrive two ways:
 | **Craigslist** | Static SEO search results | NY-area subdomains (newyork, hudsonvalley, catskills, albany, longisland, newjersey, poconos) × garage-sale + antiques categories + free-text queries |
 | **EstateSales.NET** | JSON-LD events + link harvest on city hub pages | NYC / Poughkeepsie–Kingston / Monticello–Liberty hubs |
 | **estatesales.org** | Same generic parser | NY state page |
-| **gsalr** | Same | Garage/yard-sale aggregator, per-city pages |
 | **AuctionZip** | Same | Zip-radius searches on 10001 / 12401 / 12701 |
 | **AuctionNinja** | Same | Big in the NY-metro/Hudson Valley estate-auction scene |
-| **HiBid / MaxSold** | Same | Online estate auctions; flagged "ONLINE BIDDING" |
+| **HiBid** | Same | Online estate auctions; flagged "ONLINE BIDDING" |
 | **Antiques & The Arts Weekly** | Same | Show/fair calendar |
 | **Web discovery** | DuckDuckGo (keyless) or Brave Search API | Catches sale companies' own sites, promoters, local-paper calendars |
 
@@ -37,6 +36,8 @@ out to be JS-only render as "no sale links found" — swap in better URLs in
   automation; a lot of yard-sale traffic lives there.
 - **Instagram-only sale companies** — login-walled; web discovery sometimes
   surfaces their websites.
+- **gsalr.com / MaxSold** — hard-block CI requests with 403s. Craigslist
+  covers the garage-sale beat; MaxSold auctions surface via web discovery.
 
 ## How listings are organized
 
