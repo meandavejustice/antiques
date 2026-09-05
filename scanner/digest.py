@@ -41,6 +41,11 @@ _REGIONS = [
 
 EMAIL_CAP_PER_REGION = 12
 
+# An undated sale whose ad has been around this long is almost certainly
+# over (yard/estate sales happen the weekend they're posted); hide it even
+# though the poster left the ad up.
+UNDATED_TTL_DAYS = 10
+
 
 def _esc(s: str) -> str:
     return html.escape(s or "")
@@ -51,8 +56,17 @@ def _sort_key(s: Sale):
 
 
 def _visible(s: Sale, today: date) -> bool:
-    """Hide sales that already ended; keep undated ones."""
-    return dates.status(s.start_date, s.end_date, today) != "PAST"
+    """Hide sales that ended, and stale undated ones."""
+    if dates.status(s.start_date, s.end_date, today) == "PAST":
+        return False
+    if not s.start_date and s.first_seen:
+        try:
+            age = (today - date.fromisoformat(s.first_seen)).days
+        except ValueError:
+            return True
+        if age > UNDATED_TTL_DAYS:
+            return False
+    return True
 
 
 def _chip(text: str, color: str) -> str:

@@ -115,12 +115,13 @@ def parse(text: str, today: date | None = None) -> tuple[str, str]:
                     return start.isoformat(), end.isoformat()
             return start.isoformat(), start.isoformat()
 
-    m = _SLASH_RE.search(text)
-    if m:
+    # Post bodies are noisy ("50/50 raffle", "open 9/making offers") — walk
+    # the matches and take the first that is a real calendar date.
+    for m in _SLASH_RE.finditer(text):
         mo1, d1, y1, mo2, d2, y2 = m.groups()
         mo1, d1 = int(mo1), int(d1)
         if not (1 <= mo1 <= 12):
-            return "", ""
+            continue
         year1 = _year4(y1, today.year)
         start = _mk(year1, mo1, d1) if year1 else _infer_year(mo1, d1, today)
         if start:

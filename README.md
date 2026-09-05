@@ -17,7 +17,7 @@ the PA side of the Upper Delaware). Results arrive two ways:
 
 | Source | How | Notes |
 |---|---|---|
-| **Craigslist** | Static SEO search results | NY-area subdomains (newyork, hudsonvalley, catskills, albany, longisland, newjersey, poconos) × garage-sale + antiques categories + free-text queries |
+| **Craigslist** | Static SEO search results + one ad-page fetch per new listing | NY-area subdomains (newyork, hudsonvalley, catskills, albany, longisland, newjersey, poconos) × garage-sale + antiques categories + free-text queries. Search results carry no dates, so each new ad's page is fetched once (capped at 150/run) for its sale dates, address, and body text; results are cached in the seen-state |
 | **EstateSales.NET** | JSON-LD events + link harvest on city hub pages | NYC / Poughkeepsie–Kingston / Monticello–Liberty hubs |
 | **estatesales.org** | Same generic parser | NY state page |
 | **AuctionZip** | Same | Zip-radius searches on 10001 / 12401 / 12701 |
@@ -63,9 +63,13 @@ audio, tools, primitives & country, militaria, …) so you can see at a glance
 what a sale has.
 
 **Dates**: parsed from every format sellers use ("Aug 15-17", "Fri 8/15 to
-Sun 8/17", "starts Sept. 5th"…). Sales that already ended are hidden; sales
+Sun 8/17", "starts Sept. 5th"…), and cached in the seen-state so an ad's
+page is never fetched twice. Sales that already ended are hidden; sales
 happening now get **TODAY / ON NOW**, and weekend ones **THIS WEEKEND**.
-Undated sales sort last in each region with a "check the listing" note.
+Undated sales sort last in each region with a "check the listing" note —
+and are dropped 10 days after first sighting, since a sale whose ad has
+lingered that long with no parseable date is over even if the ad is still
+up.
 
 The filter also drops the classic junk: "we buy estates" ads, cleanout
 services, real-estate listings ("real estate sale…"), job posts, and

@@ -139,6 +139,38 @@ d("Dec 30 - Jan 2", "2026-12-30", "2027-01-02")
 d("Sale was Aug 1", "2026-08-01", "2026-08-01")
 d("no dates here at all", "", "")
 d("open 9-4 both days", "", "")  # bare numbers must not parse as dates
+# Post-body noise: an invalid "date" must not mask a real one after it.
+d("50/50 raffle! sale runs 8/22", "2026-08-22", "2026-08-22")
+
+# ------------------------------------------- expiry of undated listings ----
+from scanner import digest  # noqa: E402
+
+fresh = mk("Yard sale")
+fresh.first_seen = "2026-08-05"          # 6 days old — keep
+stale = mk("Yard sale")
+stale.first_seen = "2026-07-25"          # 17 days old, no date — hide
+dated_stale = mk("Estate sale")
+dated_stale.first_seen = "2026-07-25"    # old ad but future sale date — keep
+dated_stale.start_date = dated_stale.end_date = "2026-08-22"
+assert digest._visible(fresh, TODAY)
+assert not digest._visible(stale, TODAY)
+assert digest._visible(dated_stale, TODAY)
+
+# Dates parsed once are cached in state and restored the next day, so the
+# PAST filter keeps working without refetching the ad.
+from scanner import state as state_mod  # noqa: E402
+
+st = {}
+day1 = mk("Garage sale Sat 8/22")
+day1.id = "craigslist:123"
+day1.start_date = day1.end_date = "2026-08-22"
+state_mod.mark(st, [day1])
+day2 = mk("Garage sale Sat 8/22")
+day2.id = "craigslist:123"              # same ad, dates not re-fetched
+new, seen = state_mod.mark(st, [day2])
+assert not new and seen == [day2]
+assert day2.start_date == "2026-08-22", day2.start_date
+assert day2.first_seen, "first_seen not restored"
 
 assert dates.status("2026-08-11", "2026-08-11", TODAY) == "TODAY"
 assert dates.status("2026-08-10", "2026-08-12", TODAY) == "ON NOW"

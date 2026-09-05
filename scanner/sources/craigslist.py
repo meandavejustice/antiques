@@ -54,6 +54,48 @@ def _parse(html: str, city: str) -> list[Sale]:
     return out
 
 
+def fetch_details(sales: list[Sale], state: dict, *,
+                  limit: int = 150) -> SourceHealth:
+    """Fetch the ad page for Craigslist sales not yet detail-checked.
+
+    The static search results carry no dates — the sale dates live on the
+    ad itself (the gms category's "sale dates" attribute and/or the post
+    body). Each ad is fetched once ever: the parsed dates and a
+    dates_checked flag are cached in the seen-state, so the steady-state
+    daily cost is roughly one request per brand-new ad (the cap spreads a
+    backlog across runs). Also picks up the address and body text, which
+    sharpens region matching and item tags.
+    """
+    pending = [s for s in sales if s.source == SOURCE
+               and not state.get(s.id, {}).get("dates_checked")]
+    todo = pending[:limit]
+    fetched = errors = 0
+    for s in todo:
+        try:
+            resp = http.get(s.url, delay=0.5)
+            soup = BeautifulSoup(resp.text, "html.parser")
+            attrs = " ".join(g.get_text(" ", strip=True)
+                             for g in soup.select("p.attrgroup, div.attrgroup"))
+            body_el = soup.select_one("#postingbody")
+            body = (body_el.get_text(" ", strip=True)
+                    .replace("QR Code Link to This Post", "").strip()
+                    if body_el else "")
+            addr_el = soup.select_one(".mapaddress")
+            if addr_el:
+                s.location = addr_el.get_text(" ", strip=True)
+            s.description = " · ".join(filter(None, [attrs[:200], body]))[:500]
+            s.details_fetched = True
+            fetched += 1
+        except Exception:
+            errors += 1
+    skipped = len(pending) - len(todo)
+    note = (f"{fetched}/{len(todo)} new ad pages fetched for dates"
+            + (f", {skipped} deferred to tomorrow (cap {limit})" if skipped > 0 else "")
+            + (f", {errors} failed" if errors else ""))
+    return SourceHealth("Craigslist ad details", errors == 0 or fetched > 0,
+                        fetched, note)
+
+
 def scan(config: dict) -> tuple[list[Sale], SourceHealth]:
     subdomains = config.get("subdomains", [])
     paths = config.get("paths", [])

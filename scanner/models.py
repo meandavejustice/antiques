@@ -19,6 +19,8 @@ class Sale:
     start_date: str = ""         # ISO yyyy-mm-dd once parsed
     end_date: str = ""
     region_hint: str = ""        # region implied by where it was found
+    first_seen: str = ""         # ISO date this listing first appeared (from state)
+    details_fetched: bool = False  # ad page fetched this run (persisted to state)
 
     # Filled in by the classifier:
     sale_type: str = ""          # see classify.py type constants

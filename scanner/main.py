@@ -42,13 +42,18 @@ def run() -> int:
     for s in found:
         sales.setdefault(s.id, s)
 
-    relevant = [classify.classify(s) for s in sales.values()
-                if classify.is_relevant(s)]
-    for s in relevant:
-        dates.enrich(s)
-    print(f"{len(sales)} raw results → {len(relevant)} relevant after filtering")
+    candidates = [s for s in sales.values() if classify.is_relevant(s)]
+    print(f"{len(sales)} raw results → {len(candidates)} relevant after filtering")
 
     st = state.load()
+    print("Fetching new Craigslist ad pages for sale dates…")
+    h = craigslist.fetch_details(candidates, st)
+    health.append(h)
+
+    relevant = [classify.classify(s) for s in candidates]
+    for s in relevant:
+        dates.enrich(s)
+
     new, seen = state.mark(st, relevant)
     state.save(st)
     print(f"{len(new)} new, {len(seen)} previously seen")
